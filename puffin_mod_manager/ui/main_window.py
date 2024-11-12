@@ -21,11 +21,9 @@ class MainWindow(Gtk.ApplicationWindow):
     def create_row(self, title, desc):
         row = Gtk.ListBoxRow()
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        label = Gtk.Label(label=title, xalign=0)
-        desc_label = Gtk.Label(label=desc, xalign=0)
 
+        label = Gtk.Label(label=title, xalign=0)
         box.append(label)
-        box.append(desc_label)
 
         row.set_child(box)
         row.set_selectable(True)
@@ -48,8 +46,8 @@ class MainWindow(Gtk.ApplicationWindow):
     def build_left_child(self):
         self.left_child = Gtk.ListBox()
 
-        for game in State.SUPPORTED_GAMES:
-            self.left_child.append(self.create_row(f"{game}", f""))
+        # for game in State.SUPPORTED_GAMES:
+        #     self.left_child.append(self.create_row(f"{game}", f""))
 
     def build_right_child(self):
         self.right_child = Gtk.Label(label="Right Pane")
