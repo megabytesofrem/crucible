@@ -1,3 +1,0 @@
-#!/bin/sh
-DIR="$(dirname $0)"
-exec python3 -B $DIR/puffin_mod_manager/app.py "$@" 

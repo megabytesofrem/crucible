@@ -3,7 +3,7 @@ import subprocess
 
 import glob
 
-from puffin_mod_manager.state import Game, Storefront
+from model.enums import GameVariant, Storefront
 
 
 def shell(command):
@@ -17,29 +17,28 @@ class OverlayFS:
     """
 
     def find_game_dir(self, game, storefront):
-        # Set PUFFIN_BASE_PATH to override the default path: for games installed in non-standard locations
+        # Set CRUCIBLE_BASE_PATH to override the default path: for games installed in non-standard locations
         base_path = None
         game_path = None
 
         match storefront:
             case Storefront.GOG:
                 # Locate where Heroic installs games, by default this is ~/Games/Heroic
-                base_path = os.environ.get(
-                    "PUFFIN_BASE_PATH") or os.path.expanduser("~/Games/Heroic")
+                base_path = os.environ.get("CRUCIBLE_BASE_PATH") or os.path.expanduser(
+                    "~/Games/Heroic")
             case Storefront.STEAM:
                 # Locate where Steam installs games, by default this is ~/.steam/steam/steamapps/common
-                base_path = os.environ.get("PUFFIN_BASE_PATH") or os.path.expanduser(
+                base_path = os.environ.get("CRUCIBLE_BASE_PATH") or os.path.expanduser(
                     "~/.steam/steam/steamapps/common")
             case _:
-                raise ValueError(
-                    "Unsupported storefront, only GOG and Steam are supported")
+                raise ValueError("Unsupported storefront, only GOG and Steam are supported")
 
         game_path = glob.glob(f'{base_path}/*{game.get_friendly_name()}*')
         return game_path
 
     def find_mods(self, game):
         mod_list = glob.glob(
-            f"~/puffin_mod_manager/mods/{game.get_friendly_name()}/*")
+            f"~/crucible/mods/{game.get_friendly_name()}/*")
         return mod_list
 
     def coalesce_mods(self, game):
@@ -54,21 +53,21 @@ class OverlayFS:
         # Mount point is the directory where the overlay will be mounted
 
         game_path = self.find_game_dir(game, storefront)
-        work_dir = "/tmp/puffin_mod_manager/overlay/work"
-        mount_point = "/tmp/puffin_mod_manager/overlay/merged"
+        work_dir = "/tmp/crucible/overlay/work"
+        mount_point = "/tmp/crucible/overlay/merged"
 
         # Walk through the mods directory and find all the mods
         match game:
-            case Game.FALLOUT_3:
+            case GameVariant.FALLOUT_3:
                 upper_dir = f"{game_path}/Data"
                 lower_dir = f"{game_path}/Data"
-            case Game.FALLOUT_NEW_VEGAS:
+            case GameVariant.FALLOUT_NEW_VEGAS:
                 upper_dir = f"{game_path}/Data"
                 lower_dir = f"{game_path}/Data"
-            case Game.FALLOUT_4:
+            case GameVariant.FALLOUT_4:
                 upper_dir = f"{game_path}/Data"
                 lower_dir = f"{game_path}/Data"
-            case Game.SKYRIM:
+            case GameVariant.SKYRIM:
                 upper_dir = f"{game_path}/Data"
 
         # Coalesce the mods into a single string separated by colons
@@ -85,4 +84,4 @@ class OverlayFS:
                   lower_dir},upperdir={upper_dir},workdir={work_dir} {mount_point}")
 
     def unmount_overlay():
-        shell("pkexec umount /tmp/puffin_mod_manager/overlay/merged")
+        shell("pkexec umount /tmp/crucible/overlay/merged")

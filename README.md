@@ -1,9 +1,9 @@
 <p align="center" width="100%">
   <img width="128px" height="128px" src="icon.png"></img>
-  <h1 align="center">Puffin Mod Manager</h1>
+  <h1 align="center">Crucible</h1>
 </p>
 
-The first-class mod manager that Linux deserves. Utilizes OverlayFS for easy and stable modding.
+Linux native mod manager for Bethesda games.
 
 ## Supported Games
 - Fallout 3
@@ -12,4 +12,4 @@ The first-class mod manager that Linux deserves. Utilizes OverlayFS for easy and
 - Skyrim
 
 # Usage
-Run `./puffin` to launch the application.
+Run `./crucible` to launch the application.
