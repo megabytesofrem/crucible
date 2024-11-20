@@ -1,16 +1,21 @@
-import io
-from gi.repository import Gtk, Gdk, Gio, GdkPixbuf
-from PIL import Image
+import gi
+gi.require_version("Adw", "1")
+
+from gi.repository import Adw, Gtk, Gdk, Gio
 
 from model.backend import AppState, GameVariant
 from view.util import get_game_shortname, load_banner_image
-from view.locate_game_dialog import LocateGameDialog
+
+from view.components.styled_button import StyledButton
+from view.components.mod_row_item import ModRowItem
+from view.add_game_dialog import AddGameDialog
 
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.state = AppState
         self.set_title("Crucible")
         self.set_size_request(600, 500)
         self.set_default_size(600, 500)
@@ -36,6 +41,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def layout_game_list(self):
         self.game_list = Gtk.ListBox()
+        self.game_list.get_style_context().add_class("navigation-sidebar")
         self.game_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self.game_list.connect("row-selected", self.on_selection_changed)
 
@@ -47,9 +53,22 @@ class MainWindow(Gtk.ApplicationWindow):
             row.set_child(label)
             self.game_list.append(row)
 
+    def layout_no_games_view(self):
+        view = Adw.StatusPage(title="No games found")
+        view.set_icon_name("tab-new")
+        view.set_margin_top(10)
+        view.set_margin_start(10)
+        view.set_margin_end(10)
+
+        label = Gtk.Label(label="Add a game to get started")
+        label.set_hexpand(True)
+        label.set_vexpand(True)
+
+        view.set_child(label)
+        return view
+
     def layout_title_box(self):
         title_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        selected_game = GameVariant.deserialize(AppState.get_selected_game_name())
 
         self.active_title_label = Gtk.Label(xalign=0)
         self.active_title_label.set_hexpand(True)
@@ -57,7 +76,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Title box contains the banner and the active title label
         title_box.append(self.active_title_label)
-        launch_button = Gtk.Button(label="Launch")
+        launch_button = StyledButton(label="Launch", styles=["suggested-action"])
+
         settings_button = Gtk.Button.new_from_icon_name("emblem-system")
         title_box.append(launch_button)
         title_box.append(settings_button)
@@ -65,7 +85,7 @@ class MainWindow(Gtk.ApplicationWindow):
         return title_box
 
     def layout_mod_view(self):
-        self.game_options = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        self.game_options = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, vexpand=True)
         self.game_options.set_margin_top(10)
         self.game_options.set_margin_start(10)
         self.game_options.set_margin_end(10)
@@ -77,13 +97,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.banner.set_content_fit(Gtk.ContentFit.FILL)
 
         title_box = self.layout_title_box()
-
-        if selected_game is None:
-            self.banner.set_visible(False)
-            self.active_title_label.set_markup("<span size='large'><b>No game selected</b></span>")
-
         self.game_options.append(self.banner)
         self.game_options.append(title_box)
+
+        for i in range(5):
+            mod = ModRowItem(None, f"Mod {i}")
+            self.game_options.append(mod)
 
     def layout_ui(self):
         """Layout the UI for the main application window"""
@@ -96,7 +115,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.set_titlebar(self.header)
 
         # Add click event
-        locate_game_button.connect("clicked", self.on_locate_game_button_clicked)
+        locate_game_button.connect("clicked", self.on_add_game_clicked)
         about_button.connect("clicked", self.show_about_dialog)
 
         self.split_pane = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
@@ -107,7 +126,13 @@ class MainWindow(Gtk.ApplicationWindow):
 
         # Set children
         self.split_pane.set_start_child(self.game_list)
-        self.split_pane.set_end_child(self.game_options)
+
+        # Layout either the selected game options view or the no games view
+        if len(self.state.get_backend().get_all_games()) > 0:
+            self.split_pane.set_end_child(self.game_options)
+        else:
+            self.split_pane.set_end_child(self.layout_no_games_view())
+
         self.set_child(self.split_pane)
 
     # Signal handlers
@@ -136,18 +161,17 @@ class MainWindow(Gtk.ApplicationWindow):
             self.banner.set_visible(True)
             self.banner.set_pixbuf(load_banner_image(get_game_shortname(selected_game)))
 
-    def on_locate_game_button_clicked(self, widget):
+            # Update the split pane to show the correct view
+            self.split_pane.set_end_child(self.game_options)
+
+    def on_add_game_clicked(self, widget):
         def response(dialog, response):
-            state = AppState
-            backend = AppState.get_backend()
+            backend = self.state.get_backend()
 
             if response == Gtk.ResponseType.OK:
                 # Create the listbox row
-                selected_game = state.get_selected_game_model()
+                selected_game = self.state.get_selected_game_model()
                 unique_id = selected_game.enum_variant.serialize()
-
-                print("Unique ID:", unique_id)
-                print("Query: ", backend.get_game_by_id(unique_id))
 
                 if backend.get_game_by_id(unique_id) is None:
                     row = Gtk.ListBoxRow()
@@ -155,12 +179,20 @@ class MainWindow(Gtk.ApplicationWindow):
                     row.set_child(label)
                     self.game_list.append(row)
                     backend.insert_game(selected_game)
+                else:
+                    # Show a toast message
+                    toast_overlay = Adw.ToastOverlay.new()
+                    toast = Adw.Toast.new(f"{selected_game.name} already exists in the library")
+                    toast.set_timeout(2)
+                    toast_overlay.add_toast(toast)
+
+                    self.game_options.append(toast_overlay)
 
             elif response == Gtk.ResponseType.CANCEL:
                 print("Cancel")
 
             dialog.destroy()
 
-        dialog = LocateGameDialog(parent=self)
+        dialog = AddGameDialog(parent=self)
         dialog.connect("response", response)
         dialog.show()

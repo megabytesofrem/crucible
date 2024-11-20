@@ -25,4 +25,4 @@ class Game:
         self.enum_variant = enum_variant
         self.storefront = storefront
         self.installed_mods = []
-        self.executable_path = ""
+        self.executable_path = executable_path
