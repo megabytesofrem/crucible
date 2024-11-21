@@ -5,11 +5,10 @@ from io import BytesIO
 from model.enums import GameVariant
 
 
-def get_game_shortname(game):
+def get_game_shortname(game: GameVariant):
     return GameVariant.serialize(game)
 
-
-def load_banner_image(game, size=(300, 150)):
+def load_banner_image(game: str, size=(300, 150)):
     try:  # 600 x 300
         image = Image.open(f"crucible_app/view/banners/{game}.jpg")
     except FileNotFoundError:

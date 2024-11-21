@@ -7,13 +7,17 @@ from model.game_model import Game
 from view.components.styled_button import StyledButton
 from view.util import get_game_shortname, load_banner_image
 
+from typing import Optional
 
 class AddGameDialog(Gtk.Dialog):
     def __init__(self, parent):
         super().__init__(transient_for=parent, use_header_bar=False)
         self.state = AppState
 
-        self.header = Gtk.HeaderBar(title_widget=Gtk.Label(label="Add a Game"))
+        self.header: Gtk.HeaderBar = Gtk.HeaderBar(title_widget=Gtk.Label(label="Add a Game"))
+        self.vbox: Optional[Gtk.Box] = None
+        self.banner: Optional[Gtk.Picture] = None
+
         self.set_titlebar(self.header)
         self.set_modal(True)
 

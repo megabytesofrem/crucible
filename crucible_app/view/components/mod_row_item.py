@@ -1,10 +1,18 @@
 from gi.repository import Gtk
 
+from model.game_model import Game
+from typing import Optional
+
+
 class ModRowItem(Gtk.ListBoxRow):
-    def __init__(self, game_model, mod):
+    def __init__(self, game_model: Optional[Game], mod):
         super().__init__()
 
-        self.game_model = game_model
+        self.mod_name_label: Optional[Gtk.Label] = None
+        self.hbox: Optional[Gtk.Box] = None
+        self.remove_button: Optional[Gtk.Button] = None
+
+        self.game_model: Optional[Game] = game_model
         self.mod = mod
 
         self.set_selectable(True)

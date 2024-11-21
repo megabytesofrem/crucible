@@ -1,6 +1,4 @@
 from dataclasses import dataclass, field
-from gi.repository import Gtk, GObject
-
 from model.enums import GameVariant, Storefront
 
 

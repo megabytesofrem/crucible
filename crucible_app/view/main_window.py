@@ -1,4 +1,5 @@
 import gi
+
 gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk, Gdk, Gio
@@ -9,11 +10,21 @@ from view.util import get_game_shortname, load_banner_image
 from view.components.styled_button import StyledButton
 from view.components.mod_row_item import ModRowItem
 from view.add_game_dialog import AddGameDialog
+from view.configure_game_dialog import ConfigureGameDialog
 
+from typing import Optional
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.about_dialog: Gtk.AboutDialog = Gtk.AboutDialog()
+        self.header: Optional[Gtk.HeaderBar] = None
+        self.banner: Optional[Gtk.Picture] = None
+        self.active_title_label: Optional[Gtk.Label] = None
+        self.game_list: Optional[Gtk.ListBox] = None
+        self.game_options: Optional[Gtk.Box] = None
+        self.split_pane: Optional[Gtk.Paned] = None
 
         self.state = AppState
         self.set_title("Crucible")
@@ -25,11 +36,10 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.layout_ui()
 
-    def show_about_dialog(self, widget):
+    def show_about_dialog(self, widget: Gtk.Widget):
         logo = Gio.File.new_for_path("icon.png")
         logo_texture = Gdk.Texture.new_from_file(logo)
 
-        self.about_dialog = Gtk.AboutDialog()
         self.about_dialog.set_transient_for(self)
 
         self.about_dialog.set_modal(True)
@@ -79,6 +89,8 @@ class MainWindow(Gtk.ApplicationWindow):
         launch_button = StyledButton(label="Launch", styles=["suggested-action"])
 
         settings_button = Gtk.Button.new_from_icon_name("emblem-system")
+        settings_button.connect("clicked", self.on_configure_game_clicked)
+
         title_box.append(launch_button)
         title_box.append(settings_button)
 
@@ -109,9 +121,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.header = Gtk.HeaderBar(title_widget=Gtk.Label(label="Crucible"))
         self.header.pack_start(locate_game_button := Gtk.Button.new_from_icon_name("tab-new"))
-
         self.header.pack_end(about_button := Gtk.Button.new_from_icon_name("help-about"))
-
         self.set_titlebar(self.header)
 
         # Add click event
@@ -137,7 +147,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     # Signal handlers
 
-    def on_selection_changed(self, listbox, row):
+    def on_selection_changed(self, listbox:  Gtk.ListBox, _row):
         selected_row = listbox.get_selected_row()
         if selected_row:
             label = selected_row.get_child()
@@ -195,4 +205,12 @@ class MainWindow(Gtk.ApplicationWindow):
 
         dialog = AddGameDialog(parent=self)
         dialog.connect("response", response)
-        dialog.show()
+        dialog.present()
+
+    def on_configure_game_clicked(self, widget):
+        def response(dialog, response):
+            dialog.destroy()
+
+        dialog = ConfigureGameDialog(parent=self, title="Configure Game")
+        dialog.connect("response", response)
+        dialog.present()
