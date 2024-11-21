@@ -17,11 +17,35 @@ ALL_SUPPORTED_GAMES = [
 
 ALL_STOREFRONTS = [Storefront.STEAM, Storefront.GOG]
 
+SCHEMA_TABLE_GAME = '''
+CREATE TABLE IF NOT EXISTS "Game" (
+    "id"    TEXT NOT NULL,
+    "name"    TEXT NOT NULL,
+    "storefront"    TEXT,
+    "executable_path"    TEXT,
+    PRIMARY KEY("id")
+);
+'''
+
+SCHEMA_TABLE_INSTALLEDMOD = '''
+CREATE TABLE IF NOT EXISTS "InstalledMod"  (
+    "id"    TEXT NOT NULL,
+    "name"    TEXT NOT NULL,
+    "game_id"    TEXT NOT NULL,
+    PRIMARY KEY("id"),
+    FOREIGN KEY("game_id") REFERENCES "Game"("id")
+);
+'''
 
 class Backend:
     def __init__(self):
         self.conn = sqlite3.connect('store.db')
         self.cursor = self.conn.cursor()
+        self.setup_schema()
+
+    def setup_schema(self):
+        self.cursor.execute(SCHEMA_TABLE_GAME)
+        self.cursor.execute(SCHEMA_TABLE_INSTALLEDMOD)
 
     def close_connection(self):
         self.conn.close()
