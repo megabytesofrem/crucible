@@ -1,6 +1,4 @@
-from dataclasses import dataclass
-from typing import List
-from gi.repository import GObject
+from typing import List, Optional
 
 import sqlite3
 
@@ -51,12 +49,15 @@ class Backend:
         self.conn.close()
 
     def insert_game(self, game: Game):
-        self.cursor.execute(f"INSERT INTO 'Game' (id, name, storefront, executable_path) VALUES ('{
-                            game.enum_variant.serialize()}', '{game.name}', '{game.storefront}', '{game.executable_path}')")
+        self.cursor.execute(f"INSERT INTO 'Game' (id, name, storefront, executable_path) VALUES (?,?,?,?)",
+                            (game.enum_variant.serialize(), game.name, game.storefront, game.executable_path))
         self.conn.commit()
 
+    def update_game_name(self, id: str, new_name: str):
+        self.cursor.execute("UPDATE 'Game' SET name=? WHERE id=?", (new_name, id))
+
     def remove_game(self, game: Game):
-        self.cursor.execute(f"DELETE FROM 'Game' WHERE name='{game.name}'")
+        self.cursor.execute("DELETE FROM 'Game' WHERE name=?", game.name)
         self.conn.commit()
 
     def get_all_games(self) -> List[Game]:
@@ -78,8 +79,8 @@ class Backend:
 
         return games
 
-    def get_game_by_id(self, id: str) -> Game:
-        self.cursor.execute(f"SELECT * FROM 'Game' WHERE id='{id}'")
+    def get_game(self, id: str) -> Optional[Game]:
+        self.cursor.execute(f"SELECT * FROM 'Game' WHERE id=?", id)
         response = self.cursor.fetchone()
 
         if response is None:
