@@ -1,7 +1,14 @@
-from gi.repository import Gtk
 from typing import Optional
 
+from gi.repository import Gtk
+
+
 class ModalDialog(Gtk.Dialog):
+    """
+    Base class for custom, immovable modal dialogs that are always centered and on top
+    of a parent window.
+    """
+
     def __init__(self, parent, title: str):
         super().__init__(transient_for=parent, use_header_bar=False)
 
@@ -25,9 +32,10 @@ class ModalDialog(Gtk.Dialog):
         self.fake_header.set_margin_end(10)
 
         left_child = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, hexpand=True)
-        left_child.append(Gtk.Label(label=self.title, xalign=0))
+        left_child.append(title_label := Gtk.Label(label=self.title, hexpand=True))
+        title_label.set_justify(Gtk.Justification.CENTER)
 
-        close_button = Gtk.Button.new_from_icon_name("list-remove-symbolic")
+        close_button = Gtk.Button.new_from_icon_name("window-close-symbolic")
         close_button.get_style_context().add_class("circular")
         close_button.get_style_context().add_class("error")
         close_button.connect("clicked", lambda _: self.do_close(self))
@@ -40,6 +48,9 @@ class ModalDialog(Gtk.Dialog):
 
         self.vbox.append(self.fake_header)
         self.set_child(self.vbox)
+
+    def get_modal_body(self):
+        return self.vbox
 
     def set_modal_body(self, body: Gtk.Widget):
         self.vbox.append(body)

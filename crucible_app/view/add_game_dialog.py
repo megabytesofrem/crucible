@@ -1,13 +1,13 @@
+from typing import Optional
+
 from gi.repository import Gtk
 
 from model.backend import ALL_SUPPORTED_GAMES, AppState
 from model.enums import GameVariant, Storefront
 from model.game_model import Game
-
+from util import get_game_shortname, load_banner_image
 from view.components.styled_button import StyledButton
-from view.util import get_game_shortname, load_banner_image
 
-from typing import Optional
 
 class AddGameDialog(Gtk.Dialog):
     def __init__(self, parent):
@@ -55,7 +55,9 @@ class AddGameDialog(Gtk.Dialog):
         self.button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
 
         self.button_box.append(confirm_button := StyledButton(label="Add Game"))
-        self.button_box.append(cancel_button := StyledButton(label="Cancel", styles=["destructive-action"]))
+        self.button_box.append(
+            cancel_button := StyledButton(label="Cancel", styles=["destructive-action"])
+        )
 
         confirm_button.connect("clicked", self.on_confirm_clicked)
         cancel_button.connect("clicked", self.on_cancel_clicked)
@@ -97,7 +99,7 @@ class AddGameDialog(Gtk.Dialog):
     def on_selection_changed(self, dropdown, _):
         selected_item = dropdown.get_selected_item()
         if selected_item:
-            game_variant = GameVariant.deserialize(selected_item.get_string())
+            game_variant = GameVariant.name_to_variant(selected_item.get_string())
             executable_path = self.path_entry.get_text()
 
             game = Game(selected_item.get_string(), game_variant, Storefront.STEAM, executable_path)

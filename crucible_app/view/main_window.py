@@ -1,11 +1,13 @@
 import gi
 
+from joystick_input import JoystickInput
+
 gi.require_version("Adw", "1")
 
 from gi.repository import Adw, Gtk, Gdk, Gio
 
 from model.backend import AppState, GameVariant
-from view.util import get_game_shortname, load_banner_image
+from util import get_game_shortname, load_banner_image
 
 from view.components.styled_button import StyledButton
 from view.components.mod_row_item import ModRowItem
@@ -13,6 +15,7 @@ from view.add_game_dialog import AddGameDialog
 from view.configure_game_dialog import ConfigureGameDialog
 
 from typing import Optional
+
 
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
@@ -34,6 +37,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.props.show_menubar = False
         self.selected_game_model = None
 
+        self.joystick = JoystickInput()
         self.layout_ui()
 
     def show_about_dialog(self, widget: Gtk.Widget):
@@ -65,7 +69,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def layout_no_games_view(self):
         view = Adw.StatusPage(title="No games found")
-        view.set_icon_name("tab-new")
+        view.set_icon_name("list-add-symbolic")
         view.set_margin_top(10)
         view.set_margin_start(10)
         view.set_margin_end(10)
@@ -88,7 +92,7 @@ class MainWindow(Gtk.ApplicationWindow):
         title_box.append(self.active_title_label)
         launch_button = StyledButton(label="Launch", styles=["suggested-action"])
 
-        settings_button = Gtk.Button.new_from_icon_name("emblem-system")
+        settings_button = Gtk.Button.new_from_icon_name("applications-system-symbolic")
         settings_button.connect("clicked", self.on_configure_game_clicked)
 
         title_box.append(launch_button)
@@ -97,15 +101,18 @@ class MainWindow(Gtk.ApplicationWindow):
         return title_box
 
     def layout_mod_view(self):
+        """Layout the games' mod view"""
         self.game_options = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10, vexpand=True)
         self.game_options.set_margin_top(10)
         self.game_options.set_margin_start(10)
         self.game_options.set_margin_end(10)
 
         title_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
-        selected_game = GameVariant.deserialize(AppState.get_selected_game_name())
+        selected_game = GameVariant.name_to_variant(AppState.get_selected_game_name())
 
-        self.banner = Gtk.Picture.new_for_pixbuf(load_banner_image(get_game_shortname(selected_game)))
+        self.banner = Gtk.Picture.new_for_pixbuf(
+            load_banner_image(get_game_shortname(selected_game))
+        )
         self.banner.set_content_fit(Gtk.ContentFit.FILL)
 
         title_box = self.layout_title_box()
@@ -120,7 +127,9 @@ class MainWindow(Gtk.ApplicationWindow):
         """Layout the UI for the main application window"""
 
         self.header = Gtk.HeaderBar(title_widget=Gtk.Label(label="Crucible"))
-        self.header.pack_start(locate_game_button := Gtk.Button.new_from_icon_name("tab-new"))
+        self.header.pack_start(
+            locate_game_button := Gtk.Button.new_from_icon_name("list-add-symbolic")
+        )
         self.header.pack_end(about_button := Gtk.Button.new_from_icon_name("help-about"))
         self.set_titlebar(self.header)
 
@@ -147,12 +156,12 @@ class MainWindow(Gtk.ApplicationWindow):
 
     # Signal handlers
 
-    def on_selection_changed(self, listbox:  Gtk.ListBox, _row):
+    def on_selection_changed(self, listbox: Gtk.ListBox, _row):
         selected_row = listbox.get_selected_row()
         if selected_row:
             label = selected_row.get_child()
             title = label.get_text()
-            game = GameVariant.deserialize(title)
+            game = GameVariant.name_to_variant(title)
 
             selected_index = selected_row.get_index()
 
@@ -164,9 +173,11 @@ class MainWindow(Gtk.ApplicationWindow):
         self.on_update_ui(AppState, None)
 
     def on_update_ui(self, state, _):
-        selected_game = GameVariant.deserialize(AppState.get_selected_game_name())
+        selected_game = GameVariant.name_to_variant(AppState.get_selected_game_name())
         if selected_game:
-            self.active_title_label.set_markup(f"<span size='large'><b>{selected_game.__str__()}</b></span>")
+            self.active_title_label.set_markup(
+                f"<span size='large'><b>{selected_game.__str__()}</b></span>"
+            )
 
             self.banner.set_visible(True)
             self.banner.set_pixbuf(load_banner_image(get_game_shortname(selected_game)))
@@ -181,7 +192,15 @@ class MainWindow(Gtk.ApplicationWindow):
             if response == Gtk.ResponseType.OK:
                 # Create the listbox row
                 selected_game = self.state.get_selected_game_model()
-                unique_id = selected_game.enum_variant.serialize()
+                print(
+                    f"Selected game: {selected_game} and enum variant: {selected_game.enum_variant}"
+                )
+
+                unique_id = selected_game.enum_variant.serialize_to_id()
+
+                print(
+                    f"Query to see if it exists: {unique_id}: {backend.get_game_by_id(unique_id)}"
+                )
 
                 if backend.get_game_by_id(unique_id) is None:
                     row = Gtk.ListBoxRow()

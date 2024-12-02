@@ -1,12 +1,14 @@
-from gi.repository import GdkPixbuf
-from PIL import Image
 from io import BytesIO
+
+from PIL import Image
+from gi.repository import GdkPixbuf
 
 from model.enums import GameVariant
 
 
 def get_game_shortname(game: GameVariant):
-    return GameVariant.serialize(game)
+    return GameVariant.serialize_to_id(game)
+
 
 def load_banner_image(game: str, size=(300, 150)):
     try:  # 600 x 300

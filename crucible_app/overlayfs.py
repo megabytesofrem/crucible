@@ -1,13 +1,14 @@
+import glob
 import os
 import subprocess
-
-import glob
 
 from model.enums import GameVariant, Storefront
 
 
 def shell(command):
-    return subprocess.run(command.split(" "), shell=True, check=True, stdout=subprocess.PIPE).stdout.decode('utf-8')
+    return subprocess.run(
+        command.split(" "), shell=True, check=True, stdout=subprocess.PIPE
+    ).stdout.decode("utf-8")
 
 
 class OverlayFS:
@@ -25,20 +26,21 @@ class OverlayFS:
             case Storefront.GOG:
                 # Locate where Heroic installs games, by default this is ~/Games/Heroic
                 base_path = os.environ.get("CRUCIBLE_BASE_PATH") or os.path.expanduser(
-                    "~/Games/Heroic")
+                    "~/Games/Heroic"
+                )
             case Storefront.STEAM:
                 # Locate where Steam installs games, by default this is ~/.steam/steam/steamapps/common
                 base_path = os.environ.get("CRUCIBLE_BASE_PATH") or os.path.expanduser(
-                    "~/.steam/steam/steamapps/common")
+                    "~/.steam/steam/steamapps/common"
+                )
             case _:
                 raise ValueError("Unsupported storefront, only GOG and Steam are supported")
 
-        game_path = glob.glob(f'{base_path}/*{game.get_friendly_name()}*')
+        game_path = glob.glob(f"{base_path}/*{game.get_friendly_name()}*")
         return game_path
 
     def find_mods(self, game):
-        mod_list = glob.glob(
-            f"~/crucible/mods/{game.get_friendly_name()}/*")
+        mod_list = glob.glob(f"~/crucible/mods/{game.get_friendly_name()}/*")
         return mod_list
 
     def coalesce_mods(self, game):
@@ -80,8 +82,10 @@ class OverlayFS:
         shell(f"mkdir -p {mount_point}")
 
         if not os.path.ismount(mount_point):
-            shell(f"pkexec mount -t overlay overlay -o lowerdir={
-                  lower_dir},upperdir={upper_dir},workdir={work_dir} {mount_point}")
+            shell(
+                f"pkexec mount -t overlay overlay -o lowerdir={
+                  lower_dir},upperdir={upper_dir},workdir={work_dir} {mount_point}"
+            )
 
     def unmount_overlay():
         shell("pkexec umount /tmp/crucible/overlay/merged")

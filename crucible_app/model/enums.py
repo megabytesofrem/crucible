@@ -11,7 +11,24 @@ class GameVariant(Enum):
     def __str__(self) -> str:
         return self.value
 
-    def deserialize(string):
+    @staticmethod
+    def id_to_variant(string):
+        match string:
+            case "fallout3":
+                return GameVariant.FALLOUT_3
+            case "falloutnv":
+                return GameVariant.FALLOUT_NEW_VEGAS
+            case "fallout4":
+                return GameVariant.FALLOUT_4
+            case "skyrim":
+                return GameVariant.SKYRIM
+            case "skyrimse":
+                return GameVariant.SKYRIM_SE
+            case _:
+                return None
+
+    @staticmethod
+    def name_to_variant(string):
         match string:
             case "Fallout 3":
                 return GameVariant.FALLOUT_3
@@ -26,7 +43,7 @@ class GameVariant(Enum):
             case _:
                 return None
 
-    def serialize(self):
+    def serialize_to_id(self):
         match self:
             case GameVariant.FALLOUT_3:
                 return "fallout3"
@@ -47,7 +64,8 @@ class Storefront(Enum):
     def __str__(self) -> str:
         return self.value
 
-    def serialize(string):
+    @staticmethod
+    def name_to_variant(string):
         match string:
             case "Steam":
                 return Storefront.STEAM
@@ -55,3 +73,10 @@ class Storefront(Enum):
                 return Storefront.GOG
             case _:
                 return None
+
+    def serialize_to_string(self):
+        match self:
+            case Storefront.STEAM:
+                return "Steam"
+            case Storefront.GOG:
+                return "GOG"
