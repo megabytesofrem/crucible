@@ -8,7 +8,7 @@ from gi.repository import GdkPixbuf
 from model.enums import GameVariant
 
 # Path to the lock file
-lock_file_path = Path(Path.home() / "/.crucible.lock")
+lock_file_path = Path(Path.home() / ".crucible.lock")
 
 
 def get_game_shortname(game: GameVariant):
