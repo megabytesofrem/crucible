@@ -1,0 +1,49 @@
+app-id: com.megabytesofrem.Crucible
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: /app/bin/bundler.sh
+
+finish-args:
+  - --filesystem=home
+  - --share=ipc
+  - --share=network
+  - --socket=pulseaudio
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --socket=session-bus
+  - --socket=system-bus
+  - --device=input
+  - --talk-name=org.freedesktop.DBus
+  - --talk-name=org.freedesktop.portal.Desktop
+
+modules:
+  # Python dependencies
+  - name: pip-install
+    buildsystem: simple
+    build-options:
+      build-args:
+        - --share=network
+    build-commands:
+      - pip3 install --prefix=/app PyGObject pygame pillow
+
+  # Copy the 'crucible_app' directory from outside, excluding store.db and bundler.sh
+  - name: crucible_app
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/bin/crucible_app
+      - cp bundler.sh /app/bin/bundler.sh
+      - cp store.db /app/bin/store.db
+      - cp icon.png /app/bin/icon.png
+      - chmod +x /app/bin/bundler.sh
+      # Copy everything except store.db and bundler.sh using find
+      - find . -type f ! -name store.db ! -name bundler.sh -exec cp --parents {} /app/bin/crucible_app/ \;
+    sources:
+      - type: file
+        path: ./bundler.sh
+      - type: file
+        path: ./store.db
+      - type: file
+        path: ./icon.png
+      - type: dir
+        path: ./crucible_app
