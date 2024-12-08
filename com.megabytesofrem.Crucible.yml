@@ -5,17 +5,28 @@ sdk: org.gnome.Sdk
 command: /app/bin/bundler.sh
 
 finish-args:
-  - --filesystem=home
   - --share=ipc
   - --share=network
   - --socket=pulseaudio
   - --socket=fallback-x11
   - --socket=wayland
+  - --device=dri
+  - --filesystem=home
+  - --filesystem=/var/lib/flatpak/app:ro
+  - --filesystem=xdg-data/flatpak/app:ro
+  - --filesystem=xdg-data/flatpak/overrides:create
+  - --talk-name=org.gnome.Software
+  - --talk-name=org.freedesktop.impl.portal.PermissionStore
   - --socket=session-bus
-  - --socket=system-bus
-  - --device=input
-  - --talk-name=org.freedesktop.DBus
-  - --talk-name=org.freedesktop.portal.Desktop
+  # Added filesystem access for relevant directories
+  - --filesystem=~/.local/share/crucible
+  - --filesystem=~/.config/crucible
+  - --filesystem=xdg-data/crucible
+  - --filesystem=/app/bin/crucible_app:ro
+  - --filesystem=~/.var/app/com.megabytesofrem.Crucible:ro
+  # Permissions for executables and symlinks
+  - --share=network
+  - --share=ipc
 
 modules:
   # Python dependencies
