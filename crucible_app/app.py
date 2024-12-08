@@ -27,7 +27,7 @@ class Main(Adw.Application):
         # Create a lockfile to ensure there is only one instance of us
         lock_file = util.place_lock()
         if lock_file is None:
-            print("Yes")
+            print("An instance of Crucible is already running, please close it")
             exit(1)
         else:
             self.lock_file = lock_file
