@@ -38,10 +38,10 @@ def destroy_lock():
 
 def load_banner_image(game: str, size=(300, 150)):
     try:  # 600 x 300
-        image = Image.open(f"crucible_app/view/banners/{game}.jpg")
+        image = Image.open(f"crucible_app/assets/banners/{game}.jpg")
     except FileNotFoundError:
         # Load a fallback image if the game banner is not found
-        image = Image.open("crucible_app/view/banners/default.jpg")
+        image = Image.open("crucible_app/assets/banners/default.jpg")
 
     # This is probably redundant, from when we were resizing the image
     # on the fly, should probably be removed at some point
